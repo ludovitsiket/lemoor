@@ -27,44 +27,27 @@ def cred(data):
     return (ip, name, pwd)
 
 
-def connection(ip):
+def connection(ip, name, pwd):
     try:
-        to_url(ip)
-    except urllib.error.URLError as e:
+        print(ip)
+        if 'http' not in ip:
+            ip = 'http://' + ip
+        with url.urlopen(ip, timeout=1) as response:
+            html = response.read()
+            print(html)
+    except (urllib.error.URLError, ValueError) as e:
         print(e)
-
-
-def to_url(ip):
-    ip = check_correct_url(ip)
-    print(ip)
-    url.urlopen(ip, timeout=1)
-
-
-def check_correct_url(param):
-    if "http" not in param:
-        param = "http://" + param
-    return param
-
-
-def con_cyclus(data, ip, name, pwd):
-    x = 0
-    while x < len(data):
-        connection(ip[x])
-        x += 1
 
 
 def http_connect(data):
     try:
         ip, name, pwd = cred(data)
-        con_cyclus(data, ip, name, pwd)
+        x = 0
+        while x < len(data):
+            connection(ip[x], name[x], pwd[x])
+            x += 1
     except (KeyboardInterrupt, FileNotFoundError) as e:
         print(e)
-
-
-def scrap_data(ip):
-    with url.urlopen(ip) as response:
-        html = response.read()
-    return html
 
 
 def main():
