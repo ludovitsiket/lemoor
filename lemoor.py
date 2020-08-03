@@ -1,53 +1,61 @@
 import csv
 import urllib
 import urllib.request as url
+import sys
 
 
 def read_file(addr):
-    x = []
+    content = []
     with open(addr, 'r') as f:
-        csv_reader = csv.DictReader(f)
-        for row in csv_reader:
-            x.append(row)
-    return x
-
-
-def append_data(ip, name, pwd, data, x):
-    ip.append(data[x]['address'])
-    name.append(data[x]['name'])
-    pwd.append(data[x]['password'])
+        for row in csv.DictReader(f):
+            return content.append(row)
 
 
 def cred(data):
     ip, name, pwd = [], [], []
     x = 0
     while x < len(data):
-        append_data(ip, name, pwd, data, x)
+        ip.append(data[x]['address'])
+        name.append(data[x]['name'])
+        pwd.append(data[x]['password'])
         x += 1
     return (ip, name, pwd)
 
 
+def cisco_cmd():
+    cmd = ['enable', 'show running-config', 'show vlan summary',
+           'show vlan brief', 'write memory']
+    return cmd
+
+
 def connection(ip, name, pwd):
-    try:
-        print(ip)
-        if 'http' not in ip:
-            ip = 'http://' + ip
-        with url.urlopen(ip, timeout=1) as response:
-            html = response.read()
-            print(html)
-    except (urllib.error.URLError, ValueError) as e:
-        print(e)
+    cred_dict = {}
+    print(ip)
+    if 'http' not in ip:
+        ip = 'http://' + ip
+    cred_dict[name] = bytes(pwd, encoding='utf-8')
+    with url.urlopen(ip, cred_dict, timeout=1) as response:
+        print('OK')
+        return response
 
 
 def http_connect(data):
     try:
+        if data is None:
+            print('Check your addr.csv file if it is correct.')
+            sys.exit()
         ip, name, pwd = cred(data)
         x = 0
         while x < len(data):
-            connection(ip[x], name[x], pwd[x])
+            if pwd[x] is not None:
+                connection(ip[x], name[x], pwd[x])
+            else:
+                print('IP address ' + ip[x] + ' has no credentials.')
             x += 1
-    except (KeyboardInterrupt, FileNotFoundError) as e:
+    except (urllib.error.URLError, KeyboardInterrupt, FileNotFoundError,
+            TypeError) as e:
         print(e)
+        sys.exit()
 
 
 def main():
@@ -56,4 +64,5 @@ def main():
     http_connect(data)
 
 
-main()
+if __name__ == '__main__':
+    main()
